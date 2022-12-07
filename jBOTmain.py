@@ -9,6 +9,7 @@ import constants
 
 # Replace YOUR_TOKEN_HERE with your Discord bot token
 TOKEN = constants.TOKEN_CONST
+
 intents = discord.Intents.all()
 # Create a Discord client
 client = discord.Client(intents=discord.Intents.default())
