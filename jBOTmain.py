@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.utils import get
 
 # Replace YOUR_TOKEN_HERE with your Discord bot token
-TOKEN = 'MTA0OTk4MzQ5MzI4OTAyOTY4Mw.GsK85b.5xExKrUPVfX-HY5AQtYdMoknjHvTGaAp2CV5xI'
+TOKEN = 'TOKEN HERE'
 intents = discord.Intents.all()
 # Create a Discord client
 client = discord.Client(intents=discord.Intents.default())
