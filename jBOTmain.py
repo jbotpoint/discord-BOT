@@ -1,5 +1,6 @@
 import discord
 import youtube_dl
+import random
 from discord.ext import commands
 from discord.utils import get
 
@@ -35,5 +36,35 @@ async def play(ctx, url):
         source = await discord.FFmpegOpusAudio.from_probe(url2, **FFMPEG_OPTIONS)
         voice_client.play(source)
 
+@bot.event
+async def on_message(message):
+
+    value1 = random.randint(1, 10)
+    value2 = random.randint(1, 10)
+
+    if value1 == value2:
+        if value1 == 1:
+            emoji = '🤪'
+        elif value1 == 2:
+            emoji = '🤥'
+        elif value1 == 3:
+            emoji = '🥺'
+        elif value1 == 4:
+            emoji = '😡'
+        elif value1 == 5:
+            emoji = '💀'
+        elif value1 == 6:
+            emoji = '😈'
+        elif value1 == 7:
+            emoji = '😂'
+        elif value1 == 8:
+            emoji = '😘'
+        else:
+            emoji = '😊'
+        try:
+            await message.add_reaction(emoji)
+        except discord.HTTPException:
+            pass
+    
 # Run the bot using the token
 bot.run(TOKEN)
