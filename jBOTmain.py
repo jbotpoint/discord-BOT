@@ -39,25 +39,25 @@ async def play(ctx, url):
 @bot.event
 async def on_message(message):
 
-    value1 = random.randint(1, 10)
-    value2 = random.randint(1, 10)
-
+    value1 = random.randint(1, 50)
+    value2 = random.randint(1, 50)
+    emojVal = value1 % 10
     if value1 == value2:
-        if value1 == 1:
+        if emojVal == 1:
             emoji = '🤪'
-        elif value1 == 2:
+        elif emojVal == 2:
             emoji = '🤥'
-        elif value1 == 3:
+        elif emojVal == 3:
             emoji = '🥺'
-        elif value1 == 4:
+        elif emojVal == 4:
             emoji = '😡'
-        elif value1 == 5:
+        elif emojVal == 5:
             emoji = '💀'
-        elif value1 == 6:
+        elif emojVal == 6:
             emoji = '😈'
-        elif value1 == 7:
+        elif emojVal == 7:
             emoji = '😂'
-        elif value1 == 8:
+        elif emojVal == 8:
             emoji = '😘'
         else:
             emoji = '😊'
