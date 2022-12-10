@@ -1,6 +1,7 @@
 import discord
 import youtube_dl
 import random
+import requests
 from discord.ext import commands
 from discord.utils import get
 
@@ -17,6 +18,12 @@ client = discord.Client(intents=discord.Intents.default())
 
 # Create a Discord bot using the '!' command prefix
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+@bot.command(pass_context=True)
+async def findsummoner(ctx):
+    msgcontent = ctx.message.content.split(" ", 1)
+    await ctx.send("Pong! " + msgcontent[1])
+
 
 @bot.command()
 async def disconnect(ctx):
@@ -65,6 +72,10 @@ async def on_message(message):
             await message.add_reaction(emoji)
         except discord.HTTPException:
             pass
+    if message.content[0] == '!':
+        await bot.process_commands(message)
+    
+    
     
 # Run the bot using the token
 bot.run(TOKEN)
