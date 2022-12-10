@@ -32,10 +32,10 @@ async def ask(ctx):
     msgcontent = ctx.message.content.split(" ", 1)
     response = openai.Completion.create(
         prompt=msgcontent[1],
-        model="text-davinci-002",
+        max_tokens=256,
+        model="text-davinci-003",
         temperature=0.9
     )
-
     await ctx.send(response["choices"][0]["text"])
 
 @bot.command()
