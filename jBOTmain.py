@@ -4,6 +4,8 @@ import random
 import requests
 from discord.ext import commands
 from discord.utils import get
+import openai
+import os
 
 
 #contains the discord bot's token
@@ -11,6 +13,12 @@ import constants
 
 # Replace YOUR_TOKEN_HERE with your Discord bot token
 TOKEN = constants.TOKEN_CONST
+
+#Open AI API token
+OPENAI_TOKEN = constants.OPENAI_TOKEN
+
+#api_client = openai.API(OPENAI_TOKEN)
+openai.api_key = OPENAI_TOKEN
 
 intents = discord.Intents.all()
 # Create a Discord client
@@ -20,10 +28,15 @@ client = discord.Client(intents=discord.Intents.default())
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.command(pass_context=True)
-async def findsummoner(ctx):
+async def ask(ctx):
     msgcontent = ctx.message.content.split(" ", 1)
-    await ctx.send("Pong! " + msgcontent[1])
+    response = openai.Completion.create(
+        prompt=msgcontent[1],
+        model="text-davinci-002",
+        temperature=0.9
+    )
 
+    await ctx.send(response["choices"][0]["text"])
 
 @bot.command()
 async def disconnect(ctx):
