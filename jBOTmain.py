@@ -6,6 +6,7 @@ from discord.ext import commands
 from discord.utils import get
 import openai
 import os
+import re
 
 
 #contains the discord bot's token
@@ -26,6 +27,64 @@ client = discord.Client(intents=discord.Intents.default())
 
 # Create a Discord bot using the '!' command prefix
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+@bot.command()
+async def movielist(ctx):
+    embed = discord.Embed(title="Movie Watch List", color=discord.Colour.purple())
+    embed.set_thumbnail(url="https://archive.org/download/png-movie-ticket-movie-ticket-1-950/png-movie-ticket-movie-ticket-1-950.png")
+    with open("movie_list.txt", "r") as filedata:
+        filelines = filedata.readlines()
+    for line in filelines:
+        if line == "":
+            continue
+        strlist = line.split("|", 1)
+        mname = strlist[0]
+        mlink = "No Link"
+        print(strlist)
+        if re.search("(?P<url>https?://[^\s]+)", strlist[1]):
+            mlink = strlist[1]
+        embed.add_field(name=mname, value=mlink, inline=False)
+
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def addmovie(ctx):
+    msgcontent = ctx.message.content
+    stringlist = re.split("(?P<url>https?://[^\s]+)", msgcontent)
+    listsize = len(stringlist)
+
+    print(stringlist)
+
+    movie_name = stringlist[0].split(" ", 1)[1]
+    movie_link = ""
+    if listsize >= 2:
+        movie_link = stringlist[1]
+    
+    f = open("movie_list.txt", "a")
+    f.write(movie_name + "|" + movie_link + "\n")
+    f.close()
+
+    await ctx.message.add_reaction('✅')
+
+@bot.command()
+async def delmovie(ctx):
+    msgcontent = ctx.message.content.split(" ", 1)
+    movie_name = msgcontent[1]
+
+    with open("movie_list.txt", 'r') as filedata:
+        inputFilelines = filedata.readlines()
+        lineindex = 1
+        for i in range(len(inputFilelines)):
+            if re.search(movie_name, inputFilelines[int(i)]):
+                line_to_delete = i+1
+                break
+    with open("movie_list.txt", 'w') as filedata:
+        for textline in inputFilelines:
+            if lineindex != line_to_delete:
+                filedata.write(textline)
+            lineindex += 1
+    
+    await ctx.message.add_reaction('✅')   
 
 @bot.command(pass_context=True)
 async def ask(ctx):
