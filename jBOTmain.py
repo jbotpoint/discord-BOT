@@ -1,12 +1,12 @@
 import discord
 import youtube_dl
 import random
-import requests
 from discord.ext import commands
 from discord.utils import get
 import openai
-import os
 import re
+import tierlist
+import asyncio
 
 
 #contains the discord bot's token
@@ -21,12 +21,52 @@ OPENAI_TOKEN = constants.OPENAI_TOKEN
 #api_client = openai.API(OPENAI_TOKEN)
 openai.api_key = OPENAI_TOKEN
 
+tierlist = tierlist.parse_tier_file("tierlistData.txt")
+
 intents = discord.Intents.all()
 # Create a Discord client
 client = discord.Client(intents=discord.Intents.default())
 
 # Create a Discord bot using the '!' command prefix
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+@bot.command()
+async def ratemovie(ctx):
+    msgcontent = ctx.message.content.split(" ", 1)
+    if len(msgcontent) > 1:
+        movie_name = msgcontent[1]
+    else:
+        movie_name = ""
+    if movie_name == "":
+        await ctx.message.add_reaction('❌')
+        return
+
+    def check(m):
+        return m.channel == ctx.message.channel and m.author == ctx.message.author
+
+    await ctx.send("Tier?")
+    try:
+        msg = await bot.wait_for("message", timeout=60.0, check=check)
+        #reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+    except asyncio.TimeoutError:
+        await ctx.message.add_reaction('❌')
+        return
+
+    movie_tier = msg.content
+    if movie_tier == "" or movie_tier == " ":
+        await ctx.message.add_reaction('❌')
+        return
+    try:
+        tierlist[movie_tier].append(movie_name)
+    except KeyError:
+        tierlist[movie_tier] = [movie_name]
+        
+    f = open("tierlistData.txt", "a")
+    f.write(movie_name + "|" + movie_tier + "\n")
+    f.close()
+
+    await msg.add_reaction('✅')
+    
 
 @bot.command()
 async def movielist(ctx):
