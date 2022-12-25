@@ -5,7 +5,7 @@ from discord.ext import commands
 from discord.utils import get
 import openai
 import re
-import tierlist
+import tierlistparser
 import asyncio
 
 
@@ -21,7 +21,7 @@ OPENAI_TOKEN = constants.OPENAI_TOKEN
 #api_client = openai.API(OPENAI_TOKEN)
 openai.api_key = OPENAI_TOKEN
 
-tierlist = tierlist.parse_tier_file("tierlistData.txt")
+tierlist = tierlistparser.parse_tier_file("tierlistData.txt")
 
 intents = discord.Intents.all()
 # Create a Discord client
@@ -29,6 +29,37 @@ client = discord.Client(intents=discord.Intents.default())
 
 # Create a Discord bot using the '!' command prefix
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+@bot.command()
+async def tierlist(ctx):
+    msgcontent = ctx.message.content.split(" ", 1)
+    if len(msgcontent) < 2:
+        await ctx.message.add_reaction('❌')
+        return
+    tier = msgcontent[1]
+    if tier == "all":
+        embed = discord.Embed(title="All Tiers", color=discord.Colour.random())
+        embed.set_thumbnail(url="https://creazilla-store.fra1.digitaloceanspaces.com/cliparts/61214/podium-trophies-clipart-xl.png")
+        for dictTier in tierlist:
+            value_to_embed = ""
+            for movie in tierlist[dictTier]:
+                if value_to_embed == "":
+                    value_to_embed = movie
+                else:
+                    value_to_embed = value_to_embed + ", " + movie
+            embed.add_field(name=dictTier, value=value_to_embed, inline=False)
+    else:
+        if not tier in tierlist:
+           await ctx.message.add_reaction('❌')
+           return
+
+        embed = discord.Embed(title=f"{tier} Tier", color=discord.Colour.random())
+        embed.set_thumbnail(url="https://creazilla-store.fra1.digitaloceanspaces.com/cliparts/61214/podium-trophies-clipart-xl.png")
+
+        for movie in tierlist[tier]:
+            embed.add_field(name=movie, inline=False)
+    
+    await ctx.send(embed=embed)
 
 @bot.command()
 async def ratemovie(ctx):
