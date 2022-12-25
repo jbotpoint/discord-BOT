@@ -39,8 +39,10 @@ async def movielist(ctx):
             continue
         strlist = line.split("|", 1)
         mname = strlist[0]
+        if mname == "":
+            mname = "No Title"
         mlink = "No Link"
-        print(strlist)
+
         if re.search("(?P<url>https?://[^\s]+)", strlist[1]):
             mlink = strlist[1]
         embed.add_field(name=mname, value=mlink, inline=False)
@@ -53,13 +55,14 @@ async def addmovie(ctx):
     stringlist = re.split("(?P<url>https?://[^\s]+)", msgcontent)
     listsize = len(stringlist)
 
-    print(stringlist)
-
     movie_name = stringlist[0].split(" ", 1)[1]
     movie_link = ""
     if listsize >= 2:
         movie_link = stringlist[1]
     
+    if movie_name == "":
+        await ctx.message.add_reaction('❌')
+        return
     f = open("movie_list.txt", "a")
     f.write(movie_name + "|" + movie_link + "\n")
     f.close()
@@ -144,8 +147,9 @@ async def on_message(message):
             await message.add_reaction(emoji)
         except discord.HTTPException:
             pass
-    if message.content[0] == '!':
-        await bot.process_commands(message)
+    if message.content:
+        if message.content[0] == '!':
+            await bot.process_commands(message)
     
     
     
