@@ -98,7 +98,7 @@ async def unratemovie(ctx):
                     for line in lines:
                         if lineindex != index:
                             filedata.write(line)
-                            lineindex += 1
+                        lineindex += 1
 
     with open("tierlistData.txt") as filedata:
         inputFilelines = filedata.readlines()
@@ -107,6 +107,9 @@ async def unratemovie(ctx):
         for i in range(len(inputFilelines)):
             if re.search(movie_name, inputFilelines[int(i)]):
                 line_to_delete.append(i+1)
+    if not line_to_delete:
+        await ctx.message.add_reaction('❌')
+        return
 
     with open("tierlistData.txt", 'w') as filedata:
         for textline in inputFilelines:
@@ -127,17 +130,18 @@ async def deltier(ctx):
         await ctx.message.add_reaction('❌')
         return
 
-    with open("tierlistData.txt") as filedata:
+    with open("tierlistData.txt", "r") as filedata:
         inputFilelines = filedata.readlines()
         lineindex = 1
         line_to_delete = []
         for i in range(len(inputFilelines)):
-            if re.search(tier + "|", inputFilelines[int(i)]):
+            if re.search("\|" + tier, inputFilelines[int(i)]):
                 line_to_delete.append(i+1)
 
+    print(line_to_delete)
     with open("tierlistData.txt", 'w') as filedata:
         for textline in inputFilelines:
-            if lineindex not in line_to_delete:
+            if not lineindex in line_to_delete:
                 filedata.write(textline)
             lineindex += 1
     tierlistObj.pop(tier, None)
@@ -231,7 +235,6 @@ async def ratemovie(ctx):
 
     await msg.add_reaction('✅')
     
-
 @bot.command()
 async def movielist(ctx):
     embed = discord.Embed(title="Movie Watch List", color=discord.Colour.purple())
