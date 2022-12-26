@@ -12,3 +12,15 @@ def parse_tier_file(file):
                 new_dict[movie_tier] = [movie_name]
                 
     return new_dict
+
+def custom_sort(value):
+    tier_dict = {}
+    with open("tierOrder.txt", "r") as filedata:
+        lines = filedata.readlines()
+        for line in lines:
+            tier, order = tuple(line.split("|"))
+            tier_dict[tier] = float(order.replace("\n", ""))
+    return tier_dict[value]
+
+            
+            

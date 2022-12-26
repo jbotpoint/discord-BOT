@@ -21,7 +21,7 @@ OPENAI_TOKEN = constants.OPENAI_TOKEN
 #api_client = openai.API(OPENAI_TOKEN)
 openai.api_key = OPENAI_TOKEN
 
-tierlist = tierlistparser.parse_tier_file("tierlistData.txt")
+tierlistObj = tierlistparser.parse_tier_file("tierlistData.txt")
 
 intents = discord.Intents.all()
 # Create a Discord client
@@ -31,34 +31,164 @@ client = discord.Client(intents=discord.Intents.default())
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.command()
-async def tierlist(ctx):
+async def assigntier(ctx):
+    msgcontent = ctx.message.content.split(" ")
+    if len(msgcontent) > 3 or len(msgcontent) < 2:
+        await ctx.message.add_reaction('❌')
+        return
+
+    tier = msgcontent[1]
+
+    def check(m):
+        return m.channel == ctx.message.channel and m.author == ctx.message.author
+    await ctx.send("Value of Tier?")
+    try:
+        msg = await bot.wait_for("message", timeout=60.0, check=check)
+        #reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+    except asyncio.TimeoutError:
+        await ctx.message.add_reaction('❌')
+        return
+
+    value = msg.content
+
+    with open("tierOrder.txt", "r") as filedata:
+        index = -1
+        lines = filedata.readlines()
+        for i in range(len(lines)):
+            if re.search(tier, lines[int(i)]):
+                index = i+1
+                break
+    if index == -1:
+        index = i+1
+        tier = lines[int(i)] + tier
+    with open("tierOrder.txt", "w") as filedata:
+        lineindex = 1
+        for line in lines:
+            if lineindex != index:
+                filedata.write(line)
+            else:
+                filedata.write(tier + "|" + value + "\n")
+            lineindex += 1
+
+    await msg.add_reaction('✅')
+
+@bot.command()
+async def unratemovie(ctx):
+    msgcontent = ctx.message.content.split(" ", 1)
+    if len(msgcontent) < 2:
+        await ctx.message.add_reaction('❌')
+        return
+    
+    movie_name = msgcontent[1]
+    for tier in list(tierlistObj):
+        if movie_name in tierlistObj[tier]:
+            tierlistObj[tier].remove(movie_name)
+            if not tierlistObj[tier]:
+                tierlistObj.pop(tier, None)
+                with open("tierOrder.txt", "r") as filedata:
+                    index = -1
+                    lines = filedata.readlines()
+                    for i in range(len(lines)):
+                        if re.search(tier, lines[int(i)]):
+                            index = i+1
+                            break
+
+                with open("tierOrder.txt", "w") as filedata:
+                    lineindex = 1
+                    for line in lines:
+                        if lineindex != index:
+                            filedata.write(line)
+                            lineindex += 1
+
+    with open("tierlistData.txt") as filedata:
+        inputFilelines = filedata.readlines()
+        lineindex = 1
+        line_to_delete = []
+        for i in range(len(inputFilelines)):
+            if re.search(movie_name, inputFilelines[int(i)]):
+                line_to_delete.append(i+1)
+
+    with open("tierlistData.txt", 'w') as filedata:
+        for textline in inputFilelines:
+            if lineindex not in line_to_delete:
+                filedata.write(textline)
+            lineindex += 1
+
+    await ctx.message.add_reaction('✅')
+
+@bot.command()
+async def deltier(ctx):
     msgcontent = ctx.message.content.split(" ", 1)
     if len(msgcontent) < 2:
         await ctx.message.add_reaction('❌')
         return
     tier = msgcontent[1]
+    if not tier in tierlistObj:
+        await ctx.message.add_reaction('❌')
+        return
+
+    with open("tierlistData.txt") as filedata:
+        inputFilelines = filedata.readlines()
+        lineindex = 1
+        line_to_delete = []
+        for i in range(len(inputFilelines)):
+            if re.search(tier + "|", inputFilelines[int(i)]):
+                line_to_delete.append(i+1)
+
+    with open("tierlistData.txt", 'w') as filedata:
+        for textline in inputFilelines:
+            if lineindex not in line_to_delete:
+                filedata.write(textline)
+            lineindex += 1
+    tierlistObj.pop(tier, None)
+
+    with open("tierOrder.txt", "r") as filedata:
+        index = -1
+        lines = filedata.readlines()
+        for i in range(len(lines)):
+            if re.search(tier, lines[int(i)]):
+                index = i+1
+                break
+
+    with open("tierOrder.txt", "w") as filedata:
+        lineindex = 1
+        for line in lines:
+            if lineindex != index:
+                filedata.write(line)
+            lineindex += 1
+
+
+    await ctx.message.add_reaction('✅')
+
+@bot.command()
+async def tierlist(ctx):
+    msgcontent = ctx.message.content.split(" ", 1)
+    if len(msgcontent) < 2:
+        tier = "all"
+    else:    
+        tier = msgcontent[1]
     if tier == "all":
+        sorted_keys = sorted(tierlistObj, key=tierlistparser.custom_sort)
         embed = discord.Embed(title="All Tiers", color=discord.Colour.random())
         embed.set_thumbnail(url="https://creazilla-store.fra1.digitaloceanspaces.com/cliparts/61214/podium-trophies-clipart-xl.png")
-        for dictTier in tierlist:
+        for dictTier in sorted_keys:
             value_to_embed = ""
-            for movie in tierlist[dictTier]:
+            for movie in tierlistObj[dictTier]:
                 if value_to_embed == "":
                     value_to_embed = movie
                 else:
                     value_to_embed = value_to_embed + ", " + movie
             embed.add_field(name=dictTier, value=value_to_embed, inline=False)
     else:
-        if not tier in tierlist:
+        if not tier in tierlistObj:
            await ctx.message.add_reaction('❌')
            return
 
         embed = discord.Embed(title=f"{tier} Tier", color=discord.Colour.random())
         embed.set_thumbnail(url="https://creazilla-store.fra1.digitaloceanspaces.com/cliparts/61214/podium-trophies-clipart-xl.png")
 
-        for movie in tierlist[tier]:
-            embed.add_field(name=movie, inline=False)
-    
+        for movie in tierlistObj[tier]:
+            embed.add_field(name=movie, value="\u200b", inline=False)
     await ctx.send(embed=embed)
 
 @bot.command()
@@ -88,9 +218,12 @@ async def ratemovie(ctx):
         await ctx.message.add_reaction('❌')
         return
     try:
-        tierlist[movie_tier].append(movie_name)
+        tierlistObj[movie_tier].append(movie_name)
     except KeyError:
-        tierlist[movie_tier] = [movie_name]
+        tierlistObj[movie_tier] = [movie_name]
+        f2 = open("tierOrder.txt", "a")
+        f2.write(movie_tier + "|" + "1000" + "\n")
+        f2.close()
         
     f = open("tierlistData.txt", "a")
     f.write(movie_name + "|" + movie_tier + "\n")
@@ -148,10 +281,15 @@ async def delmovie(ctx):
     with open("movie_list.txt", 'r') as filedata:
         inputFilelines = filedata.readlines()
         lineindex = 1
+        line_to_delete = -1
         for i in range(len(inputFilelines)):
             if re.search(movie_name, inputFilelines[int(i)]):
                 line_to_delete = i+1
                 break
+    if line_to_delete == -1:
+        await ctx.message.add_reaction('❌')
+        return
+
     with open("movie_list.txt", 'w') as filedata:
         for textline in inputFilelines:
             if lineindex != line_to_delete:
