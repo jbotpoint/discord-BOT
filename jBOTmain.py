@@ -32,7 +32,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.command()
 async def assigntier(ctx):
-    msgcontent = ctx.message.content.split(" ")
+    msgcontent = ctx.message.content.split(" ", 1)
     if len(msgcontent) > 3 or len(msgcontent) < 2:
         await ctx.message.add_reaction('❌')
         return
@@ -41,7 +41,7 @@ async def assigntier(ctx):
 
     def check(m):
         return m.channel == ctx.message.channel and m.author == ctx.message.author
-    await ctx.send("Value of Tier?")
+    await ctx.send("Rank/number of Tier?")
     try:
         msg = await bot.wait_for("message", timeout=60.0, check=check)
         #reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
