@@ -7,7 +7,8 @@ import openai
 import re
 import tierlistparser
 import asyncio
-
+import chess
+import chessHandler
 
 #contains the discord bot's token
 import constants
@@ -31,6 +32,42 @@ client = discord.Client(intents=discord.Intents.default())
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.command()
+async def pchess(ctx):
+    board = chess.Board()
+    await ctx.message.add_reaction('✅')
+    
+    board_string = chessHandler.board_to_string(board)
+    #get input from user
+    move = ""
+    colourMove = {"White": True, "Black": False}
+    turn = "White"
+    while move != "exit":
+        await ctx.send(board_string)
+        await ctx.send(f"{turn} to move.")
+
+        def check(m):
+            return m.channel == ctx.message.channel
+        try:
+            msg = await bot.wait_for("message", timeout=60.0, check=check)
+        except asyncio.TimeoutError:
+            await ctx.message.add_reaction('❌')
+            return
+        
+        inputed_move = msg.content.split(" ")
+        move_tosend = ""
+        if len(inputed_move) == 1:
+            #do something
+            move_tosend = move[0]
+        elif len(inputed_move) == 2:
+            #parse second input
+            move_tosend = chessHandler.format_long_move(inputed_move, colourMove[turn]) 
+
+        turn = chessHandler.get_next_turn(turn)
+
+
+    await msg.add_reaction('☑')
+
+@bot.command()
 async def assigntier(ctx):
     msgcontent = ctx.message.content.split(" ", 1)
     if len(msgcontent) > 3 or len(msgcontent) < 2:
@@ -43,7 +80,7 @@ async def assigntier(ctx):
         return m.channel == ctx.message.channel and m.author == ctx.message.author
     await ctx.send("Rank/number of Tier?")
     try:
-        msg = await bot.wait_for("message", timeout=60.0, check=check)
+        msg = await bot.wait_for("message", timeout=30.0, check=check)
         #reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
     except asyncio.TimeoutError:
         await ctx.message.add_reaction('❌')
@@ -211,7 +248,7 @@ async def ratemovie(ctx):
 
     await ctx.send("Tier?")
     try:
-        msg = await bot.wait_for("message", timeout=60.0, check=check)
+        msg = await bot.wait_for("message", timeout=30.0, check=check)
         #reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
     except asyncio.TimeoutError:
         await ctx.message.add_reaction('❌')
@@ -362,8 +399,6 @@ async def on_message(message):
     if message.content:
         if message.content[0] == '!':
             await bot.process_commands(message)
-    
-    
-    
+       
 # Run the bot using the token
 bot.run(TOKEN)
